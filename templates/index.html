@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jenkins Plugin Downloader</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 3rem 1rem;
+    }
+
+    .container { width: 100%; max-width: 680px; }
+
+    header { margin-bottom: 1.75rem; }
+    header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px; }
+    header p  { margin-top: 0.35rem; color: #555; font-size: 0.9rem; line-height: 1.5; }
+
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1.75rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .row { display: flex; gap: 1rem; }
+
+    .field { display: flex; flex-direction: column; gap: 0.35rem; flex: 1; margin-bottom: 1rem; }
+    .field.short { max-width: 160px; }
+    .field label { font-size: 0.8rem; font-weight: 600; color: #444; text-transform: uppercase; letter-spacing: 0.04em; }
+
+    input[type="text"] {
+      padding: 0.55rem 0.8rem;
+      border: 1.5px solid #dde1e9;
+      border-radius: 7px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.15s;
+      background: #fafafa;
+    }
+    input[type="text"]:focus { border-color: #3b6ef0; background: #fff; }
+
+    .opt-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.88rem;
+      color: #555;
+    }
+    .opt-row input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: #3b6ef0; }
+    .opt-row label { cursor: pointer; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.6rem 1.4rem;
+      border: none;
+      border-radius: 7px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .btn-primary { background: #3b6ef0; color: #fff; }
+    .btn-primary:hover { background: #2a5bd7; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-success { background: #16a34a; color: #fff; text-decoration: none; }
+    .btn-success:hover { background: #15803d; }
+
+    /* Progress section */
+    #progress-section { display: none; margin-top: 1.5rem; border-top: 1px solid #eee; padding-top: 1.25rem; }
+
+    .progress-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.6rem;
+    }
+    .progress-header span { font-size: 0.82rem; font-weight: 600; color: #444; text-transform: uppercase; letter-spacing: 0.04em; }
+
+    .badge {
+      padding: 0.2rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .badge-running { background: #fef9c3; color: #854d0e; }
+    .badge-done    { background: #dcfce7; color: #166534; }
+    .badge-error   { background: #fee2e2; color: #991b1b; }
+
+    .log {
+      background: #1a1b26;
+      color: #cdd6f4;
+      font-family: "JetBrains Mono", "Cascadia Code", "Fira Code", "Consolas", monospace;
+      font-size: 0.78rem;
+      line-height: 1.6;
+      border-radius: 7px;
+      padding: 0.9rem 1rem;
+      max-height: 320px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .log .ok    { color: #a6e3a1; }
+    .log .err   { color: #f38ba8; }
+    .log .warn  { color: #f9e2af; }
+    .log .skip  { color: #6c7086; }
+
+    #download-wrap { margin-top: 1rem; display: none; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Jenkins Plugin Downloader</h1>
+    <p>Enter a plugin name and version to download it plus every required dependency — ready for air-gapped installation.</p>
+  </header>
+
+  <div class="card">
+    <div class="row">
+      <div class="field">
+        <label for="plugin_name">Plugin name</label>
+        <input type="text" id="plugin_name" placeholder="e.g. git, workflow-aggregator" autocomplete="off" autofocus>
+      </div>
+      <div class="field short">
+        <label for="version">Version</label>
+        <input type="text" id="version" placeholder="latest" value="latest">
+      </div>
+    </div>
+
+    <div class="opt-row">
+      <input type="checkbox" id="include_optional">
+      <label for="include_optional">Include optional dependencies</label>
+    </div>
+
+    <button class="btn btn-primary" id="start-btn" onclick="startDownload()">Download plugins</button>
+
+    <div id="progress-section">
+      <div class="progress-header">
+        <span>Progress</span>
+        <span id="badge" class="badge"></span>
+      </div>
+      <div class="log" id="log"></div>
+      <div id="download-wrap">
+        <a id="download-link" class="btn btn-success" href="#">Download ZIP</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let pollTimer = null;
+
+  function colorize(lines) {
+    return lines.map(l => {
+      if (l.startsWith("  ✓"))      return `<span class="ok">${esc(l)}</span>`;
+      if (l.startsWith("  ✗"))      return `<span class="err">${esc(l)}</span>`;
+      if (l.startsWith("  ⚠"))      return `<span class="warn">${esc(l)}</span>`;
+      if (l.startsWith("  –"))      return `<span class="skip">${esc(l)}</span>`;
+      if (l.startsWith("FATAL"))    return `<span class="err">${esc(l)}</span>`;
+      if (l.startsWith("Done"))     return `<span class="ok">${esc(l)}</span>`;
+      return esc(l);
+    }).join("\n");
+  }
+
+  function esc(s) {
+    return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  async function startDownload() {
+    const name    = document.getElementById("plugin_name").value.trim();
+    const version = document.getElementById("version").value.trim() || "latest";
+    const inclOpt = document.getElementById("include_optional").checked;
+
+    if (!name) { alert("Please enter a plugin name."); return; }
+
+    document.getElementById("start-btn").disabled = true;
+    document.getElementById("progress-section").style.display = "block";
+    document.getElementById("download-wrap").style.display = "none";
+    document.getElementById("log").innerHTML = "";
+    setBadge("running");
+
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+
+    let resp;
+    try {
+      resp = await fetch("/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plugin_name: name, version, include_optional: inclOpt })
+      });
+    } catch (e) {
+      appendLog(`Network error: ${e}`);
+      setBadge("error");
+      document.getElementById("start-btn").disabled = false;
+      return;
+    }
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      appendLog("Error: " + (err.error || resp.statusText));
+      setBadge("error");
+      document.getElementById("start-btn").disabled = false;
+      return;
+    }
+
+    const { job_id } = await resp.json();
+    poll(job_id);
+  }
+
+  function poll(jobId) {
+    pollTimer = setInterval(async () => {
+      try {
+        const resp = await fetch(`/status/${jobId}`);
+        const data = await resp.json();
+
+        const logEl = document.getElementById("log");
+        logEl.innerHTML = colorize(data.log);
+        logEl.scrollTop = logEl.scrollHeight;
+
+        if (data.status === "done") {
+          clearInterval(pollTimer);
+          setBadge("done");
+          const link = document.getElementById("download-link");
+          link.href = `/result/${jobId}`;
+          document.getElementById("download-wrap").style.display = "block";
+          document.getElementById("start-btn").disabled = false;
+        } else if (data.status === "error") {
+          clearInterval(pollTimer);
+          setBadge("error");
+          document.getElementById("start-btn").disabled = false;
+        }
+      } catch (_) { /* transient network glitch, keep polling */ }
+    }, 600);
+  }
+
+  function appendLog(msg) {
+    const el = document.getElementById("log");
+    el.textContent += msg + "\n";
+  }
+
+  function setBadge(state) {
+    const b = document.getElementById("badge");
+    b.className = `badge badge-${state}`;
+    b.textContent = state === "running" ? "Running…" : state === "done" ? "Complete" : "Error";
+  }
+</script>
+</body>
+</html>

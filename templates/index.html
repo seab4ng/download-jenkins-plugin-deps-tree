@@ -15,10 +15,10 @@
       display: flex;
       align-items: flex-start;
       justify-content: center;
-      padding: 3rem 1rem;
+      padding: 3rem 1rem 4rem;
     }
 
-    .container { width: 100%; max-width: 680px; }
+    .container { width: 100%; max-width: 720px; }
 
     header { margin-bottom: 1.75rem; }
     header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px; }
@@ -31,11 +31,10 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
 
-    .row { display: flex; gap: 1rem; }
+    .row { display: flex; gap: 0.85rem; flex-wrap: wrap; }
 
-    .field { display: flex; flex-direction: column; gap: 0.35rem; flex: 1; margin-bottom: 1rem; }
-    .field.short { max-width: 160px; }
-    .field label { font-size: 0.8rem; font-weight: 600; color: #444; text-transform: uppercase; letter-spacing: 0.04em; }
+    .field { display: flex; flex-direction: column; gap: 0.35rem; flex: 1; min-width: 120px; margin-bottom: 1rem; }
+    .field label { font-size: 0.78rem; font-weight: 600; color: #444; text-transform: uppercase; letter-spacing: 0.05em; }
 
     input[type="text"] {
       padding: 0.55rem 0.8rem;
@@ -45,8 +44,10 @@
       outline: none;
       transition: border-color 0.15s;
       background: #fafafa;
+      width: 100%;
     }
     input[type="text"]:focus { border-color: #3b6ef0; background: #fff; }
+    input[type="text"]::placeholder { color: #aaa; }
 
     .opt-row {
       display: flex;
@@ -73,25 +74,29 @@
     }
     .btn-primary { background: #3b6ef0; color: #fff; }
     .btn-primary:hover { background: #2a5bd7; }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
     .btn-success { background: #16a34a; color: #fff; text-decoration: none; }
     .btn-success:hover { background: #15803d; }
 
-    /* Progress section */
+    /* Progress */
     #progress-section { display: none; margin-top: 1.5rem; border-top: 1px solid #eee; padding-top: 1.25rem; }
 
-    .progress-header {
+    .section-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #444;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.55rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 0.6rem;
     }
-    .progress-header span { font-size: 0.82rem; font-weight: 600; color: #444; text-transform: uppercase; letter-spacing: 0.04em; }
 
     .badge {
-      padding: 0.2rem 0.65rem;
+      padding: 0.18rem 0.6rem;
       border-radius: 999px;
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.06em;
@@ -103,40 +108,64 @@
     .log {
       background: #1a1b26;
       color: #cdd6f4;
-      font-family: "JetBrains Mono", "Cascadia Code", "Fira Code", "Consolas", monospace;
+      font-family: "Cascadia Code", "JetBrains Mono", "Fira Code", "Consolas", monospace;
       font-size: 0.78rem;
-      line-height: 1.6;
+      line-height: 1.65;
       border-radius: 7px;
       padding: 0.9rem 1rem;
-      max-height: 320px;
+      max-height: 260px;
       overflow-y: auto;
       white-space: pre-wrap;
       word-break: break-all;
     }
-    .log .ok    { color: #a6e3a1; }
-    .log .err   { color: #f38ba8; }
-    .log .warn  { color: #f9e2af; }
-    .log .skip  { color: #6c7086; }
 
-    #download-wrap { margin-top: 1rem; display: none; }
+    /* Plugin summary table */
+    #summary-section { display: none; margin-top: 1.5rem; border-top: 1px solid #eee; padding-top: 1.25rem; }
+
+    .table-wrap { overflow-x: auto; margin-top: 0.55rem; border-radius: 7px; border: 1px solid #e5e7eb; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    thead th {
+      background: #f8f9fb;
+      text-align: left;
+      padding: 0.55rem 0.85rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #555;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    tbody tr { border-bottom: 1px solid #f0f0f0; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #fafafa; }
+    tbody td { padding: 0.5rem 0.85rem; color: #333; }
+    tbody td.mono { font-family: monospace; font-size: 0.82rem; }
+    tbody td.right { text-align: right; color: #666; }
+
+    #download-wrap { margin-top: 1.1rem; }
   </style>
 </head>
 <body>
 <div class="container">
   <header>
     <h1>Jenkins Plugin Downloader</h1>
-    <p>Enter a plugin name and version to download it plus every required dependency — ready for air-gapped installation.</p>
+    <p>Download a plugin and its full dependency tree for air-gapped installation.</p>
   </header>
 
   <div class="card">
     <div class="row">
-      <div class="field">
+      <div class="field" style="flex:2; min-width:180px;">
         <label for="plugin_name">Plugin name</label>
-        <input type="text" id="plugin_name" placeholder="e.g. git, workflow-aggregator" autocomplete="off" autofocus>
+        <input type="text" id="plugin_name" placeholder="e.g. git, http_request" autocomplete="off" autofocus>
       </div>
-      <div class="field short">
-        <label for="version">Version</label>
+      <div class="field" style="max-width:130px;">
+        <label for="version">Plugin version</label>
         <input type="text" id="version" placeholder="latest" value="latest">
+      </div>
+      <div class="field" style="max-width:155px;">
+        <label for="jenkins_version">Jenkins version <span style="font-weight:400;color:#888;">(optional)</span></label>
+        <input type="text" id="jenkins_version" placeholder="e.g. 2.440.3">
       </div>
     </div>
 
@@ -147,14 +176,38 @@
 
     <button class="btn btn-primary" id="start-btn" onclick="startDownload()">Download plugins</button>
 
+    <!-- Progress log -->
     <div id="progress-section">
-      <div class="progress-header">
-        <span>Progress</span>
+      <div class="section-label">
+        Progress
         <span id="badge" class="badge"></span>
       </div>
       <div class="log" id="log"></div>
+    </div>
+
+    <!-- Plugin summary table -->
+    <div id="summary-section">
+      <div class="section-label">
+        Downloaded plugins
+        <span id="plugin-count" style="font-weight:400; color:#666; font-size:0.8rem;"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Plugin</th>
+              <th>Version</th>
+              <th style="text-align:right;">Size</th>
+            </tr>
+          </thead>
+          <tbody id="plugin-tbody"></tbody>
+        </table>
+      </div>
       <div id="download-wrap">
-        <a id="download-link" class="btn btn-success" href="#">Download ZIP</a>
+        <a id="download-link" class="btn btn-success" href="#" style="margin-top:1rem; display:inline-flex;">
+          Download ZIP
+        </a>
       </div>
     </div>
   </div>
@@ -165,13 +218,14 @@
 
   function colorize(lines) {
     return lines.map(l => {
-      if (l.startsWith("  ✓"))      return `<span class="ok">${esc(l)}</span>`;
-      if (l.startsWith("  ✗"))      return `<span class="err">${esc(l)}</span>`;
-      if (l.startsWith("  ⚠"))      return `<span class="warn">${esc(l)}</span>`;
-      if (l.startsWith("  –"))      return `<span class="skip">${esc(l)}</span>`;
-      if (l.startsWith("FATAL"))    return `<span class="err">${esc(l)}</span>`;
-      if (l.startsWith("Done"))     return `<span class="ok">${esc(l)}</span>`;
-      return esc(l);
+      const e = esc(l);
+      if (l.startsWith("  ✓"))   return `<span style="color:#a6e3a1">${e}</span>`;
+      if (l.startsWith("  ✗"))   return `<span style="color:#f38ba8">${e}</span>`;
+      if (l.startsWith("  ⚠"))   return `<span style="color:#f9e2af">${e}</span>`;
+      if (l.startsWith("  –"))   return `<span style="color:#6c7086">${e}</span>`;
+      if (l.startsWith("FATAL")) return `<span style="color:#f38ba8">${e}</span>`;
+      if (l.startsWith("Done"))  return `<span style="color:#a6e3a1">${e}</span>`;
+      return e;
     }).join("\n");
   }
 
@@ -179,17 +233,24 @@
     return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   }
 
+  function formatSize(kb) {
+    if (kb >= 1024) return (kb / 1024).toFixed(1) + " MB";
+    return kb + " KB";
+  }
+
   async function startDownload() {
     const name    = document.getElementById("plugin_name").value.trim();
     const version = document.getElementById("version").value.trim() || "latest";
+    const jv      = document.getElementById("jenkins_version").value.trim();
     const inclOpt = document.getElementById("include_optional").checked;
 
     if (!name) { alert("Please enter a plugin name."); return; }
 
     document.getElementById("start-btn").disabled = true;
     document.getElementById("progress-section").style.display = "block";
-    document.getElementById("download-wrap").style.display = "none";
+    document.getElementById("summary-section").style.display = "none";
     document.getElementById("log").innerHTML = "";
+    document.getElementById("plugin-tbody").innerHTML = "";
     setBadge("running");
 
     if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
@@ -199,10 +260,10 @@
       resp = await fetch("/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plugin_name: name, version, include_optional: inclOpt })
+        body: JSON.stringify({ plugin_name: name, version, jenkins_version: jv || null, include_optional: inclOpt })
       });
     } catch (e) {
-      appendLog(`Network error: ${e}`);
+      appendRaw(`Network error: ${e}`);
       setBadge("error");
       document.getElementById("start-btn").disabled = false;
       return;
@@ -210,7 +271,7 @@
 
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
-      appendLog("Error: " + (err.error || resp.statusText));
+      appendRaw("Error: " + (err.error || resp.statusText));
       setBadge("error");
       document.getElementById("start-btn").disabled = false;
       return;
@@ -233,22 +294,38 @@
         if (data.status === "done") {
           clearInterval(pollTimer);
           setBadge("done");
-          const link = document.getElementById("download-link");
-          link.href = `/result/${jobId}`;
-          document.getElementById("download-wrap").style.display = "block";
+          showPluginTable(data.plugins, jobId);
           document.getElementById("start-btn").disabled = false;
         } else if (data.status === "error") {
           clearInterval(pollTimer);
           setBadge("error");
           document.getElementById("start-btn").disabled = false;
         }
-      } catch (_) { /* transient network glitch, keep polling */ }
+      } catch (_) { /* transient glitch, keep polling */ }
     }, 600);
   }
 
-  function appendLog(msg) {
-    const el = document.getElementById("log");
-    el.textContent += msg + "\n";
+  function showPluginTable(plugins, jobId) {
+    const tbody = document.getElementById("plugin-tbody");
+    tbody.innerHTML = "";
+    plugins.forEach((p, i) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td style="color:#999;width:36px">${i + 1}</td>
+        <td class="mono">${esc(p.name)}</td>
+        <td class="mono">${esc(p.version)}</td>
+        <td class="right">${formatSize(p.size_kb)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById("plugin-count").textContent = `${plugins.length} plugin${plugins.length !== 1 ? "s" : ""}`;
+    document.getElementById("download-link").href = `/result/${jobId}`;
+    document.getElementById("summary-section").style.display = "block";
+  }
+
+  function appendRaw(msg) {
+    document.getElementById("log").textContent += msg + "\n";
   }
 
   function setBadge(state) {
